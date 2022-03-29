@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdexcept>
+#include <memory>
 
 void validateArguments(int argc)
 {
@@ -10,6 +11,11 @@ void validateArguments(int argc)
     }
 }
 
+class CustomError: public std::logic_error {
+public:
+    CustomError(const char *what) : std::logic_error(what) {}
+};
+
 class Resource
 {
 public:
@@ -18,7 +24,7 @@ public:
         std::cout << "Using resource. Passed " << *arg << std::endl;
         if (*arg == 'd')
         {
-            throw std::logic_error("Passed d. d is prohibited.");
+            throw CustomError("d does not belong here!");
         }
     }
 };
@@ -28,15 +34,13 @@ int main(int argc, char* argv[])
     validateArguments(argc);
 
     const char* argument = argv[1];
-    Resource* rsc = nullptr;
-
+    std::unique_ptr<Resource> rsc = nullptr;
     try
     {
-        rsc = new Resource();
+        rsc = std::make_unique<Resource>();
         rsc->use(argument);
-        delete rsc;
     }
-    catch (std::logic_error& e)
+    catch (CustomError& e)
     {
         std::cout << e.what() << std::endl;
     }
